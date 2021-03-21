@@ -19,5 +19,19 @@ ps aux | grep kvm
 
 ## Connect via ssh
 ssh builder@127.0.0.1 -p 3614
+```
 
+# Release via
+
+* make some changes
+* execute
+
+```bash
+RELEASE_NUMBER=1
+
+# Ubuntu
+git tag ubuntu-2004-v1.18.15-${RELEASE_NUMBER} -f; git push origin ubuntu-2004-v1.18.15-${RELEASE_NUMBER}  -f
+
+# Devstack
+git tag devstack-victoria-${RELEASE_NUMBER} -f; git push origin devstack-victoria-${RELEASE_NUMBER}  -f 
 ```
