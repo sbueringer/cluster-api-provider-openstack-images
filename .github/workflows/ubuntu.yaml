@@ -13,12 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Build packer
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: ./.github/workflows/ubuntu-build.sh
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
@@ -28,7 +30,7 @@ jobs:
       id: upload-release-asset-qcow2
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./images/capi/output/ubuntu-2004-kube-v1.18.15/ubuntu-2004-kube-v1.18.15.qcow2
@@ -38,7 +40,7 @@ jobs:
       id: upload-release-asset-vmdk
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./images/capi/output/ubuntu-2004-kube-v1.18.15/ubuntu-2004-kube-v1.18.15.vmdk
