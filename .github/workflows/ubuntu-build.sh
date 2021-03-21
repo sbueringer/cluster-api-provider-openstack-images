@@ -11,7 +11,7 @@ K8S_VERSION="v1.18.15"
 SHORT_SHA="$(git rev-parse --short HEAD)"
 MAKE_VERSION="build-qemu-ubuntu-${UBUNTU_VERSION}"
 BUILD_VERSION="${UBUNTU_VERSION}-kube-${SHORT_SHA}-${DATE}"
-BUILD_DIR=./output/ubuntu-${UBUNTU_VERSION}-kube-${K8S_VERSION}/
+BUILD_DIR=./output/ubuntu-${UBUNTU_VERSION}-kube-${K8S_VERSION}
 IMAGE_NAME=ubuntu-${UBUNTU_VERSION}-kube-${K8S_VERSION}
 
 

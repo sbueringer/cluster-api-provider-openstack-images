@@ -26,23 +26,21 @@ jobs:
         release_name: Release ${{ github.ref }}
         draft: true
         prerelease: true
-    - name: Upload qcow2
-      id: upload-release-asset-qcow2
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload
+      uses: actions/github-script@v3
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./output/devstack/devstack.qcow2
-        asset_name: devstack.qcow2
-        asset_content_type: application/zip
-    - name: Upload vmdk
-      id: upload-release-asset-vmdk
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./output/devstack/devstack.vmdk
-        asset_name: devstack.vmdk
-        asset_content_type: application/zip
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const path = require('path');
+          const fs = require('fs');
+          const release_id = '${{ needs.create_release.outputs.id }}';
+          for (let file of await fs.readdirSync('./output/devstack/')) {
+            console.log('uploadReleaseAsset', file);
+            await github.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release_id,
+              name: file,
+              data: await fs.readFileSync(`./${file}`)
+            });
+          }

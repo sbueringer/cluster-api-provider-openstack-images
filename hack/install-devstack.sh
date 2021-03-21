@@ -19,9 +19,16 @@ sudo mv /tmp/sources.list /etc/apt/sources.list
 
 # Install kvm / ensure nested virtualization
 sudo apt-get update && sudo apt-get install qemu-kvm jq net-tools git -y
-# FIXME: they don't work in packer (which is okay)
-#kvm-ok
-#sudo modprobe kvm-intel
+
+# Install cloud-init
+sudo apt-get install cloud-init cloud-guest-utils cloud-initramfs-copymods cloud-initramfs-dyn-netconf cloud-initramfs-growroot -y
+sudo systemctl stop hv-kvp-daemon
+sudo systemctl disable hv-kvp-daemon
+mkdir -p /etc/systemd/system/cloud-final.service.d
+sudo systemctl enable cloud-final
+sudo systemctl enable cloud-config
+sudo systemctl enable cloud-init
+sudo systemctl enable cloud-init-local
 
 # from https://raw.githubusercontent.com/openstack/octavia/master/devstack/contrib/new-octavia-devstack.sh
 git clone -b stable/victoria https://github.com/openstack/devstack.git /tmp/devstack
@@ -87,9 +94,8 @@ LIBVIRT_TYPE=kvm
 
 # Don't download default images, just our test images
 DOWNLOAD_DEFAULT_IMAGES=False
-IMAGE_URLS="https://github.com/sbueringer/image-builder/releases/download/v1.18.15-01/ubuntu-2004-kube-v1.18.15.qcow2,"
-IMAGE_URLS+="http://download.cirros-cloud.net/0.5.1/cirros-0.5.1-x86_64-disk.img,"
-IMAGE_URLS+="https://github.com/sbueringer/cluster-api-provider-openstack-images/releases/download/amphora-victoria-1/amphora-x64-haproxy.qcow2"
+# Upload amphora so it doesn't have to be built
+IMAGE_URLS="https://github.com/sbueringer/cluster-api-provider-openstack-images/releases/download/amphora-victoria-1/amphora-x64-haproxy.qcow2"
 
 # See: https://docs.openstack.org/nova/victoria/configuration/sample-config.html
 # Helpful commands (on the devstack VM):

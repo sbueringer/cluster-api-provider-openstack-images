@@ -20,7 +20,7 @@
       "net_device": "virtio-net",
       "output_directory": "{{user `output_directory`}}",
       "qemu_binary": "{{user `qemu_binary`}}",
-      "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S -E sh -c 'usermod -L {{user `ssh_username`}} && {{user `shutdown_command`}}'",
+      "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S /sbin/shutdown -P now",
       "ssh_password": "{{user `ssh_password`}}",
       "ssh_timeout": "2h",
       "ssh_username": "{{user `ssh_username`}}",
@@ -45,7 +45,7 @@
     "build_name": "devstack",
     "build_timestamp": "{{timestamp}}",
     "cpus": "2",
-    "disk_size": "51200",
+    "disk_size": "15360",
     "distro_name": "ubuntu",
     "existing_ansible_ssh_args": "{{env `ANSIBLE_SSH_ARGS`}}",
     "format": "qcow2",
@@ -58,7 +58,6 @@
     "output_directory": "./output/{{user `build_name`}}",
     "python_path": "",
     "qemu_binary": "qemu-system-x86_64",
-    "shutdown_command": "shutdown -P now",
     "ssh_password": "builder",
     "ssh_username": "builder"
   }
