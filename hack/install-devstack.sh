@@ -88,7 +88,8 @@ LIBVIRT_TYPE=kvm
 # Don't download default images, just our test images
 DOWNLOAD_DEFAULT_IMAGES=False
 IMAGE_URLS="https://github.com/sbueringer/image-builder/releases/download/v1.18.15-01/ubuntu-2004-kube-v1.18.15.qcow2,"
-IMAGE_URLS+="http://download.cirros-cloud.net/0.5.1/cirros-0.5.1-x86_64-disk.img"
+IMAGE_URLS+="http://download.cirros-cloud.net/0.5.1/cirros-0.5.1-x86_64-disk.img,"
+IMAGE_URLS+="https://github.com/sbueringer/cluster-api-provider-openstack-images/releases/download/amphora-victoria-1/amphora-x64-haproxy.qcow2"
 
 # See: https://docs.openstack.org/nova/victoria/configuration/sample-config.html
 # Helpful commands (on the devstack VM):
