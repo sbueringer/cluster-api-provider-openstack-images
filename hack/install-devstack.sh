@@ -22,9 +22,6 @@ sudo apt-get update && sudo apt-get install qemu-kvm jq net-tools git -y
 
 # Install cloud-init
 sudo apt-get install cloud-init cloud-guest-utils cloud-initramfs-copymods cloud-initramfs-dyn-netconf cloud-initramfs-growroot -y
-sudo systemctl stop hv-kvp-daemon
-sudo systemctl disable hv-kvp-daemon
-mkdir -p /etc/systemd/system/cloud-final.service.d
 sudo systemctl enable cloud-final
 sudo systemctl enable cloud-config
 sudo systemctl enable cloud-init
