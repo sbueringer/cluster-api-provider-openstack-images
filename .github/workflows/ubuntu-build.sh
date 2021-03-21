@@ -17,7 +17,7 @@ IMAGE_NAME=ubuntu-${UBUNTU_VERSION}-kube-${K8S_VERSION}
 
 echo "Cloning branch ${IMAGE_BUILDER_BRANCH} of https://github.com/kubernets-sigs/image-builder.git"
 
-git clone -b "${IMAGE_BUILDER_BRANCH}" https://github.com/kubernets-sigs/image-builder.git /tmp/image-builder
+git clone -b "${IMAGE_BUILDER_BRANCH}" https://github.com/kubernetes-sigs/image-builder /tmp/image-builder
 cd /tmp/image-builder/images/capi
 
 

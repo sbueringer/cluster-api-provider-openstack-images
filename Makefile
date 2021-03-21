@@ -21,7 +21,7 @@ deps-qemu:
 
 build-qemu-ubuntu-2004: ## Builds Ubuntu 20.04 QEMU image
 build-qemu-ubuntu-2004:
-	packer build packer/qemu/qemu-ubuntu-2004.json
+	packer build $(PACKER_FLAGS) packer/qemu/qemu-ubuntu-2004.json
 
 .PHONY: clean-qemu
 clean-qemu: ## Removes all qemu image output directories (see NOTE at top of help)
