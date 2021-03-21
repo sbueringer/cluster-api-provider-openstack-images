@@ -6,7 +6,7 @@ on:
     - 'ubuntu*'
 
 jobs:
-  build:
+  ubuntu:
 
     runs-on: ubuntu-18.04
 
@@ -33,7 +33,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./images/capi/output/ubuntu-2004-kube-v1.18.15/ubuntu-2004-kube-v1.18.15.qcow2
+        asset_path: /tmp/image-builder/images/capi/output/ubuntu-2004-kube-v1.18.15/ubuntu-2004-kube-v1.18.15.qcow2
         asset_name: ubuntu-2004-kube-v1.18.15.qcow2
         asset_content_type: application/zip
     - name: Upload vmdk
@@ -43,6 +43,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./images/capi/output/ubuntu-2004-kube-v1.18.15/ubuntu-2004-kube-v1.18.15.vmdk
+        asset_path: /tmp/image-builder/images/capi/output/ubuntu-2004-kube-v1.18.15/ubuntu-2004-kube-v1.18.15.vmdk
         asset_name: ubuntu-2004-kube-v1.18.15.vmdk
         asset_content_type: application/zip

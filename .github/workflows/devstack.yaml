@@ -6,7 +6,7 @@ on:
     - 'devstack*'
 
 jobs:
-  build:
+  devstack:
 
     runs-on: ubuntu-18.04
 

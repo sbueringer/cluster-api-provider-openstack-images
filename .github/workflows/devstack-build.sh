@@ -29,7 +29,7 @@ make deps-qemu
 
 echo "Building image ubuntu-$BUILD_VERSION''"
 
-export PACKER_FLAGS="-debug -var 'accelerator=none' -var 'cpus=2' -var 'disk_size=10240' -var 'memory=6144'"
+export PACKER_FLAGS="-debug -var 'accelerator=none' -var 'cpus=2' -var 'disk_size=51200' -var 'memory=6144'"
 export PACKER_LOG=1
 export PACKER_LOG_PATH=/tmp/packer.log
 tail -F ${PACKER_LOG_PATH} &
@@ -45,3 +45,5 @@ qemu-img convert -f qcow2 -O vmdk -o subformat=streamOptimized ${BUILD_DIR}/${IM
 
 echo "Compressing qcow2"
 qemu-img convert -f qcow2 -O qcow2 -c ${BUILD_DIR}/${IMAGE_NAME} ${BUILD_DIR}/${IMAGE_NAME}.qcow2
+
+ls -la ${BUILD_DIR}
