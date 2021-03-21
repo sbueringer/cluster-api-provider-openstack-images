@@ -13,12 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Build packer
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: ./.github/workflows/devstack-build.sh
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
@@ -28,21 +30,19 @@ jobs:
       id: upload-release-asset-qcow2
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        # FIXME:
-        asset_path: ./output/devstack/ubuntu-2004-kube-v1.18.15.qcow2
-        asset_name: devstack-2004.qcow2
+        asset_path: ./output/devstack/devstack.qcow2
+        asset_name: devstack.qcow2
         asset_content_type: application/zip
     - name: Upload vmdk
       id: upload-release-asset-vmdk
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        # FIXME
-        asset_path: ./output/devstack/ubuntu-2004-kube-v1.18.15.vmdk
-        asset_name: devstack-2004.vmdk
+        asset_path: ./output/devstack/devstack.vmdk
+        asset_name: devstack.vmdk
         asset_content_type: application/zip

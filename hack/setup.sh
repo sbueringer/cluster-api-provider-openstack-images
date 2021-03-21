@@ -9,10 +9,19 @@ net.ipv4.conf.all.rp_filter=0
 EOF
 sudo sysctl -p /tmp/devstack.conf
 
+cat <<EOF > /tmp/sources.list
+deb http://us.archive.ubuntu.com/ubuntu focal main restricted universe
+deb http://us.archive.ubuntu.com/ubuntu focal-updates main restricted universe
+deb http://us.archive.ubuntu.com/ubuntu focal-backports main restricted universe
+deb http://security.ubuntu.com/ubuntu focal-security main restricted universe
+EOF
+sudo mv /tmp/sources.list /etc/apt/sources.list
+
 # Install kvm / ensure nested virtualization
-sudo apt-get update && sudo apt-get install qemu-kvm jq net-tools -y
-kvm-ok
-sudo modprobe kvm-intel
+sudo apt-get update && sudo apt-get install qemu-kvm jq net-tools git -y
+# FIXME: they don't work in packer (which is okay)
+#kvm-ok
+#sudo modprobe kvm-intel
 
 # from https://raw.githubusercontent.com/openstack/octavia/master/devstack/contrib/new-octavia-devstack.sh
 git clone -b stable/victoria https://github.com/openstack/devstack.git /tmp/devstack
@@ -42,6 +51,9 @@ RABBIT_PASSWORD=secretrabbit
 ADMIN_PASSWORD=secretadmin
 SERVICE_PASSWORD=secretservice
 SERVICE_TOKEN=111222333444
+
+HOST_IP=127.0.0.1
+
 # Enable Logging
 LOGFILE=/opt/stack/logs/stack.sh.log
 VERBOSE=True
@@ -94,7 +106,7 @@ cpu_allocation_ratio = 32.0
 EOF
 
 # Create the stack user
-/tmp/devstack/tools/create-stack-user.sh
+HOST_IP=127.0.0.1 /tmp/devstack/tools/create-stack-user.sh
 
 # Move everything into place (/opt/stack is the $HOME folder of the stack user)
 mv /tmp/devstack /opt/stack/

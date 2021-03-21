@@ -5,14 +5,13 @@ set -euo pipefail
 
 DATE=$(date +%Y%m%d-%H%M)
 
-IMAGE_BUILDER_BRANCH="master"
 UBUNTU_VERSION="2004"
 
 SHORT_SHA="$(git rev-parse --short HEAD)"
 MAKE_VERSION="build-qemu-ubuntu-${UBUNTU_VERSION}"
 BUILD_VERSION="${UBUNTU_VERSION}-${SHORT_SHA}-${DATE}"
-BUILD_DIR=./output/devstack-${UBUNTU_VERSION}/
-IMAGE_NAME=ubuntu-${UBUNTU_VERSION}
+BUILD_DIR=./output/devstack/
+IMAGE_NAME=devstack
 
 echo "Install prerequisites"
 
@@ -34,8 +33,6 @@ export PACKER_FLAGS="-debug -var 'accelerator=none' -var 'cpus=2' -var 'disk_siz
 export PACKER_LOG=1
 export PACKER_LOG_PATH=/tmp/packer.log
 tail -F ${PACKER_LOG_PATH} &
-
-cd ./images/capi
 
 make "${MAKE_VERSION}"
 

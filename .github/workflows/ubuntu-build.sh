@@ -5,7 +5,6 @@ set -euo pipefail
 
 DATE=$(date +%Y%m%d-%H%M)
 
-IMAGE_BUILDER_BRANCH="master"
 UBUNTU_VERSION="2004"
 K8S_VERSION="v1.18.15"
 
@@ -15,9 +14,10 @@ BUILD_VERSION="${UBUNTU_VERSION}-kube-${SHORT_SHA}-${DATE}"
 BUILD_DIR=./output/ubuntu-${UBUNTU_VERSION}-kube-${K8S_VERSION}/
 IMAGE_NAME=ubuntu-${UBUNTU_VERSION}-kube-${K8S_VERSION}
 
+
 echo "Cloning branch ${IMAGE_BUILDER_BRANCH} of https://github.com/kubernets-sigs/image-builder.git"
 
-git clone -b "${IMAGE_BUILDER_BRANCH}" https://github.com/kubernetes-sigs/image-builder /tmp/image-builder
+git clone -b "master" https://github.com/kubernetes-sigs/image-builder /tmp/image-builder
 cd /tmp/image-builder/images/capi
 
 
@@ -34,7 +34,6 @@ sudo apt update && sudo apt-get install -y \
     jq \
     rsync
 make deps-qemu
-
 
 echo "Building image ubuntu-$BUILD_VERSION''"
 
