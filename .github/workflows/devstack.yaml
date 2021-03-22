@@ -10,12 +10,15 @@ jobs:
 
     runs-on: ubuntu-18.04
 
+    timeout-minutes: 720
+
     steps:
     - uses: actions/checkout@v1
     - name: Build packer
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: ./.github/workflows/devstack-build.sh
+      timeout-minutes: 720
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
