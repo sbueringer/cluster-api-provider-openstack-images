@@ -29,7 +29,8 @@ make deps-qemu
 
 echo "Building image ubuntu-$BUILD_VERSION''"
 
-export PACKER_FLAGS="-debug -var 'accelerator=none' -var 'cpus=2' -var 'disk_size=15360' -var 'memory=6144'"
+# https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+export PACKER_FLAGS="-debug -var 'accelerator=none' -var 'cpus=2' -var 'disk_size=10240' -var 'memory=6656'"
 export PACKER_LOG=1
 export PACKER_LOG_PATH=/tmp/packer.log
 tail -F ${PACKER_LOG_PATH} &

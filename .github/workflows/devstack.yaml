@@ -1,4 +1,4 @@
-name: CI
+name: devstack
 
 on:
   push:
@@ -8,9 +8,7 @@ on:
 jobs:
   devstack:
 
-    runs-on: ubuntu-18.04
-
-    timeout-minutes: 720
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v1
@@ -18,7 +16,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: ./.github/workflows/devstack-build.sh
-      timeout-minutes: 720
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
