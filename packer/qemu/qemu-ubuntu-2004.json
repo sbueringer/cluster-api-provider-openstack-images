@@ -11,20 +11,22 @@
       "cpus": "{{user `cpus`}}",
       "disk_interface": "virtio-scsi",
       "disk_size": "{{user `disk_size`}}",
-      "format": "{{user `format`}}",
+      "format": "raw",
       "headless": "{{user `headless`}}",
       "http_directory": "./packer/qemu/linux/{{user `distro_name`}}/http/",
       "iso_checksum": "{{user `iso_checksum_type`}}:{{user `iso_checksum`}}",
       "iso_url": "{{user `iso_url`}}",
       "memory": "{{user `memory`}}",
       "net_device": "virtio-net",
-      "output_directory": "{{user `output_directory`}}",
+      "output_directory": "output",
       "qemu_binary": "{{user `qemu_binary`}}",
+      "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S -E sh -c 'shutdown -P now'",
+      "shutdown_timeout": "30m",
       "ssh_password": "{{user `ssh_password`}}",
       "ssh_timeout": "2h",
       "ssh_username": "{{user `ssh_username`}}",
       "type": "qemu",
-      "vm_name": "{{user `build_name`}}"
+      "vm_name": "disk.raw"
     }
   ],
   "provisioners": [
@@ -34,6 +36,15 @@
       "type": "shell"
     }
   ],
+  "post-processors": [
+    [
+      {
+        "type": "compress",
+        "keep_input_artifact": true,
+        "output": "/tmp/devstack.raw.tar.gz"
+      }
+    ]
+  ],
   "variables": {
     "accelerator": "kvm",
     "ansible_common_vars": "",
@@ -41,20 +52,17 @@
     "boot_command_prefix": "<esc><wait><esc><wait><enter><wait>/install/vmlinuz auto console-setup/ask_detect=false console-setup/layoutcode=us console-setup/modelcode=pc105 debconf/frontend=noninteractive debian-installer=en_US fb=false initrd=/install/initrd.gz kbd-chooser/method=us keyboard-configuration/layout=USA keyboard-configuration/variant=USA locale=en_US netcfg/get_domain=local netcfg/get_hostname=localhost grub-installer/bootdev=/dev/sda preseed/url=",
     "boot_command_suffix": "/20.04/preseed.cfg -- <wait><enter><wait>",
     "boot_wait": "10s",
-    "build_name": "devstack",
     "build_timestamp": "{{timestamp}}",
     "cpus": "2",
     "disk_size": "15360",
     "distro_name": "ubuntu",
     "existing_ansible_ssh_args": "{{env `ANSIBLE_SSH_ARGS`}}",
-    "format": "qcow2",
     "guest_os_type": "ubuntu-64",
     "headless": "true",
     "iso_checksum": "f11bda2f2caed8f420802b59f382c25160b114ccc665dbac9c5046e7fceaced2",
     "iso_checksum_type": "sha256",
     "iso_url": "http://cdimage.ubuntu.com/ubuntu-legacy-server/releases/20.04/release/ubuntu-20.04.1-legacy-server-amd64.iso",
     "memory": "6144",
-    "output_directory": "./output/{{user `build_name`}}",
     "python_path": "",
     "qemu_binary": "qemu-system-x86_64",
     "ssh_password": "builder",

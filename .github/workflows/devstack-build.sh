@@ -10,7 +10,7 @@ UBUNTU_VERSION="2004"
 SHORT_SHA="$(git rev-parse --short HEAD)"
 MAKE_VERSION="build-qemu-ubuntu-${UBUNTU_VERSION}"
 BUILD_VERSION="${UBUNTU_VERSION}-${SHORT_SHA}-${DATE}"
-BUILD_DIR=./output/devstack
+BUILD_DIR=./outputFIXME/devstack
 IMAGE_NAME=devstack
 
 echo "Install prerequisites"
@@ -30,7 +30,7 @@ make deps-qemu
 echo "Building image ubuntu-$BUILD_VERSION''"
 
 # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
-export PACKER_FLAGS="-debug -var 'accelerator=none' -var 'cpus=2' -var 'disk_size=10240' -var 'memory=6656'"
+export PACKER_FLAGS="-debug -var 'accelerator=none' -var 'cpus=2' -var 'disk_size=10240' -var 'memory=6144'"
 export PACKER_LOG=1
 export PACKER_LOG_PATH=/tmp/packer.log
 tail -F ${PACKER_LOG_PATH} &

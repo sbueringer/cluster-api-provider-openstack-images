@@ -2,6 +2,23 @@
 
 set -o errexit -o nounset -o pipefail
 
+#Remove rhgb and quiet from kernel command line
+#sed -i -e $'/rhgb/s/rhgb//' /etc/default/grub
+#sed -i -e $'/quiet/s/quiet//' /etc/default/grub
+#add console to kernel command line
+#sed -i -e $'/GRUB_CMDLINE_LINUX/s/=".*$/="console=ttyS0,38400n8d"/' /etc/default/grub
+#sed -i -e $'/GRUB_CMDLINE_LINUX/s/=".*$/="serial=tty0 console=ttyS0,38400n8d"/' /etc/default/grub
+#echo 'GRUB_TERMINAL="serial"' >> /etc/default/grub
+#echo 'GRUB_SERIAL_COMMAND="serial --speed=19200 --unit=0 --word=8 --parity=no --stop=1"' >> /etc/default/grub
+#sudo update-grub
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT=\"\"/' /etc/default/grub
+sed -i 's/GRUB_CMDLINE_LINUX=.*$/GRUB_CMDLINE_LINUX=\"console=tty0 console=ttyS0,38400n8d\"/' /etc/default/grub
+sudo update-grub
+
+# Fixup fstab
+sed -i -e $'s|/dev/fd0|#/def/fd0|' /etc/fstab
+cat /etc/fstab
+
 cat <<EOF > /tmp/devstack.conf
 net.ipv4.ip_forward=1
 net.ipv4.conf.default.rp_filter=0
@@ -18,7 +35,11 @@ EOF
 sudo mv /tmp/sources.list /etc/apt/sources.list
 
 # Install kvm / ensure nested virtualization
-sudo apt-get update && sudo apt-get install qemu-kvm jq net-tools git -y
+sudo apt-get update && sudo apt-get install qemu-kvm jq net-tools git curl gnupg2 software-properties-common -y
+
+sudo apt-add-repository universe
+sudo apt-get update
+sudo apt-get install -y gce-compute-image-packages
 
 # Install cloud-init
 sudo apt-get install cloud-init cloud-guest-utils cloud-initramfs-copymods cloud-initramfs-dyn-netconf cloud-initramfs-growroot -y
@@ -26,6 +47,10 @@ sudo systemctl enable cloud-final
 sudo systemctl enable cloud-config
 sudo systemctl enable cloud-init
 sudo systemctl enable cloud-init-local
+
+# disable cloud-init growroot
+touch /etc/growroot-disabled
+exit 0
 
 # from https://raw.githubusercontent.com/openstack/octavia/master/devstack/contrib/new-octavia-devstack.sh
 git clone -b stable/victoria https://github.com/openstack/devstack.git /tmp/devstack
