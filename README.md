@@ -1,18 +1,24 @@
 
 # Images for CAPI
 
-These images are only used to test Cluster API provider OoenStack.
+These images are only used to test Cluster API provider OpenStack.
 
-# Manual Devstack build
+# Devstack OS Image
+
+## Manual Devstack build
 
 ```bash
-export PACKER_FLAGS="-on-error=ask -var 'headless=false' -var 'cpus=6' -var 'disk_size=15360' -var 'memory=24576'"
+
+sudo virsh net-define ./virbr-packer.xml
+sudo virsh net-autostart packer
+sudo virsh net-start packer
+
+export PACKER_FLAGS="-on-error=ask -var 'headless=false' -var 'cpus=12' -var 'disk_size=15360' -var 'memory=24576'"
 export PACKER_LOG=1                   
 export PACKER_LOG_PATH=/tmp/packer.log
 make build-qemu-ubuntu-2004
 
 # Debugging
-
 ## Find ssh port via
 ps aux | grep kvm
 # e.g.
@@ -23,10 +29,42 @@ ps aux | grep kvm
 ssh builder@127.0.0.1 -p 3614
 ```
 
+## Publish image manually
+
+```bash
+#FIXME: change output of post-process to something in ./output
+gsutil mb -l EUROPE-WEST3 gs://devstack-img/ 
+gsutil cp /tmp/devstack.raw.tar.gz gs://devstack-img/devstack.raw.tar.gz
+gcloud compute images create devstack --project rich-surge-165507 --source-uri gs://devstack-img/devstack.raw.tar.gz \
+  --licenses "https://www.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx"
+# FIXME: make it public? https://cloud.google.com/compute/docs/images/managing-access-custom-images#share-images-publicly
+# upload it to the staging bucket of CAPO (same for ubuntu and amphora (all) images)
+```
+
+## Test image
+
+```bash
+# create network and firewall rules according to ${CAPO_HOME}/hack/ci/devstack-on-gce-project-install.sh
+gcloud compute instances create openstack \
+      --project ${GCP_PROJECT} \
+      --zone ${GCP_ZONE} \
+      --image devstack \
+      --boot-disk-size 100G \
+      --boot-disk-type pd-ssd \
+      --can-ip-forward \
+      --tags http-server,https-server,novnc,openstack-apis \
+      --min-cpu-platform "Intel Skylake" \
+      --machine-type "n1-standard-8" \
+      --network-interface=network="capo-e2e-mynetwork,subnet=capo-e2e-mynetwork,aliases=/24" \
+      --metadata-from-file user-data=${CAPO_HOME}/hack/ci/devstack-cloud-init.yaml
+```
+
+## FIXME: integration into CAPO e2e test
+
 # Release via
 
 * make some changes
-* execute
+* execute:
 
 ```bash
 RELEASE_NUMBER=1
@@ -41,64 +79,27 @@ git tag devstack-victoria-${RELEASE_NUMBER} -f; git push origin devstack-victori
 git tag amphora-victoria-${RELEASE_NUMBER} -f; git push origin amphora-victoria-${RELEASE_NUMBER}  -f 
 ```
 
-# GCP experiments
+# FIXME: experiments
 
+# How to add it to the job
 
-* no quied, rhgb or splashimage
-* guest env: https://cloud.google.com/compute/docs/images/install-guest-environment
+* wget/gsutil (all parts of the image)
+* cat /tmp/devstack.raw.tar.gz.part?? > /tmp/devstack.raw.tar.gz
+
 
 ```bash
-export PACKER_FLAGS="-on-error=ask -var 'headless=false' -var 'cpus=12' -var 'disk_size=4096' -var 'memory=24576'"
-export PACKER_LOG=1                   
-export PACKER_LOG_PATH=/tmp/packer.log
-make build-qemu-ubuntu-2004
-
-sudo virt-install --name mini-caas --memory 32768 \
-  --disk /var/lib/libvirt/images/mini-caas.qcow2,device=disk,bus=virtio \
-  --os-type linux \
-  --os-variant ubuntu20.04 \
-  --virt-type kvm \
-  --cpu host-passthrough \
-  --vcpus 10 \
-  --network network=mini-caas-mgmt,model=virtio \
-  --import \
-  --noautoconsole
-
-#echo "Converting qcow2 to raw"
-#qemu-img convert -f qcow2 -O raw ./output/devstack/devstack ./output/devstack/disk.raw
-#pushd ./output/devstack || exit 1
-#tar --format=oldgnu -Sczf devstack.raw.tar.gz disk.raw
-#popd || exit 1
-
-gsutil cp /tmp/devstack.raw.tar.gz gs://devstack-img/devstack.raw.tar.gz
-gcloud compute images create devstack --project rich-surge-165507 --source-uri gs://devstack-img/devstack.raw.tar.gz
-
-gcloud compute instances create openstack \
-      --project "rich-surge-165507" \
-      --zone "europe-west3-a" \
-      --image devstack \
-      --boot-disk-size 10G \
-      --boot-disk-type pd-ssd \
-      --can-ip-forward \
-      --tags http-server,https-server,novnc,openstack-apis \
-      --min-cpu-platform "Intel Skylake" \
-      --machine-type "n1-standard-2" \
-      --network-interface=network="capo-e2e-mynetwork,subnet=capo-e2e-mynetwork,aliases=/24" \
-      --metadata-from-file user-data=${CAPO_HOME}/hack/ci/devstack-cloud-init-2.yaml
-#gcloud compute images create devstack --project plated-hash-308018 --source-uri gs://devstack/devstack.raw.tar.gz --licenses "https://www.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx"
-
-
-* somehow stores in us?
-wget (all files)
-gsutil mb -l EUROPE-WEST3 gs://devstack-img/ 
-cat /tmp/devstack.raw.tar.gz.part?? > /tmp/devstack.raw.tar.gz
-
+# Workaround
+sudo socat TCP-LISTEN:80,fork TCP:10.156.0.6:80
+sudo socat TCP-LISTEN:9696,fork TCP:10.156.0.6:9696
+sudo socat TCP-LISTEN:6080,fork TCP:10.156.0.6:6080
 ```
 
-https://github.com/xobs/debian-installer/blob/master/doc/devel/partman-auto-recipe.txt
-https://github.com/deargle/kali-on-gcp/blob/master/templates/kali-2020-2.json
+# debug cmds
 
-# FIXME
-
-test fsck
-* drop soft shutdown in packer
+openstack resource provider list
+openstack resource provider inventory list 4aa55af2-d50a-4a53-b225-f6b22dd01044
+openstack resource provider usage show 4aa55af2-d50a-4a53-b225-f6b22dd01044
+openstack hypervisor stats show
+openstack hypervisor list
+openstack hypervisor show openstack
+nova-manage cell_v2  list_hosts

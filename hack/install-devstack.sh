@@ -2,30 +2,21 @@
 
 set -o errexit -o nounset -o pipefail
 
-#Remove rhgb and quiet from kernel command line
-#sed -i -e $'/rhgb/s/rhgb//' /etc/default/grub
-#sed -i -e $'/quiet/s/quiet//' /etc/default/grub
-#add console to kernel command line
-#sed -i -e $'/GRUB_CMDLINE_LINUX/s/=".*$/="console=ttyS0,38400n8d"/' /etc/default/grub
-#sed -i -e $'/GRUB_CMDLINE_LINUX/s/=".*$/="serial=tty0 console=ttyS0,38400n8d"/' /etc/default/grub
-#echo 'GRUB_TERMINAL="serial"' >> /etc/default/grub
-#echo 'GRUB_SERIAL_COMMAND="serial --speed=19200 --unit=0 --word=8 --parity=no --stop=1"' >> /etc/default/grub
-#sudo update-grub
+
+# GCP setup
+## Cleanup grub command line
 sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT=\"\"/' /etc/default/grub
 sed -i 's/GRUB_CMDLINE_LINUX=.*$/GRUB_CMDLINE_LINUX=\"console=tty0 console=ttyS0,38400n8d\"/' /etc/default/grub
 sudo update-grub
 
-# Fixup fstab
+## Cleanup fstab
 sed -i -e $'s|/dev/fd0|#/def/fd0|' /etc/fstab
 cat /etc/fstab
 
-cat <<EOF > /tmp/devstack.conf
-net.ipv4.ip_forward=1
-net.ipv4.conf.default.rp_filter=0
-net.ipv4.conf.all.rp_filter=0
-EOF
-sudo sysctl -p /tmp/devstack.conf
 
+# Install basic packages
+
+## Setup apt repos
 cat <<EOF > /tmp/sources.list
 deb http://us.archive.ubuntu.com/ubuntu focal main restricted universe
 deb http://us.archive.ubuntu.com/ubuntu focal-updates main restricted universe
@@ -34,23 +25,33 @@ deb http://security.ubuntu.com/ubuntu focal-security main restricted universe
 EOF
 sudo mv /tmp/sources.list /etc/apt/sources.list
 
-# Install kvm / ensure nested virtualization
-sudo apt-get update && sudo apt-get install qemu-kvm jq net-tools git curl gnupg2 software-properties-common -y
+## Install kvm and some other tools
+sudo apt-get update && sudo apt-get install qemu-kvm jq net-tools git curl gnupg2 software-properties-common vim -y
 
+# Add universe to be able to install gce-compute-image-packages
 sudo apt-add-repository universe
 sudo apt-get update
 sudo apt-get install -y gce-compute-image-packages
 
-# Install cloud-init
+## Install cloud-init
 sudo apt-get install cloud-init cloud-guest-utils cloud-initramfs-copymods cloud-initramfs-dyn-netconf cloud-initramfs-growroot -y
 sudo systemctl enable cloud-final
 sudo systemctl enable cloud-config
 sudo systemctl enable cloud-init
 sudo systemctl enable cloud-init-local
-
-# disable cloud-init growroot
+### disable cloud-init growroot, otherwise the server won't boot:
+### * xref: https://cloudinit.readthedocs.io/en/latest/topics/modules.html#growpart
 touch /etc/growroot-disabled
-exit 0
+
+
+# Install Devstack
+
+cat <<EOF > /tmp/devstack.conf
+net.ipv4.ip_forward=1
+net.ipv4.conf.default.rp_filter=0
+net.ipv4.conf.all.rp_filter=0
+EOF
+sudo sysctl -p /tmp/devstack.conf
 
 # from https://raw.githubusercontent.com/openstack/octavia/master/devstack/contrib/new-octavia-devstack.sh
 git clone -b stable/victoria https://github.com/openstack/devstack.git /tmp/devstack
@@ -59,6 +60,9 @@ cat <<EOF > /tmp/devstack/local.conf
 
 [[local|localrc]]
 GIT_BASE=https://github.com
+
+# Enable after installation
+#OFFLINE=True
 
 # Neutron
 enable_plugin neutron https://github.com/openstack/neutron stable/victoria
@@ -75,13 +79,15 @@ KEYSTONE_TOKEN_FORMAT=fernet
 
 SERVICE_TIMEOUT=240
 
-DATABASE_PASSWORD=secretdatabase
-RABBIT_PASSWORD=secretrabbit
-ADMIN_PASSWORD=secretadmin
-SERVICE_PASSWORD=secretservice
+DATABASE_PASSWORD=secrete
+RABBIT_PASSWORD=secrete
+ADMIN_PASSWORD=secrete
+SERVICE_PASSWORD=secrete
 SERVICE_TOKEN=111222333444
 
-HOST_IP=127.0.0.1
+# IP from packer (we need to create the server later with this IP)
+HOST_IP=10.0.2.15
+FLOATING_RANGE="172.24.4.0/24"
 
 # Enable Logging
 LOGFILE=/opt/stack/logs/stack.sh.log
@@ -135,7 +141,7 @@ cpu_allocation_ratio = 32.0
 EOF
 
 # Create the stack user
-HOST_IP=127.0.0.1 /tmp/devstack/tools/create-stack-user.sh
+HOST_IP=10.0.2.15 /tmp/devstack/tools/create-stack-user.sh
 
 # Move everything into place (/opt/stack is the $HOME folder of the stack user)
 mv /tmp/devstack /opt/stack/
@@ -144,7 +150,23 @@ chown -R stack:stack /opt/stack/devstack/
 # Stack that stack!
 su - stack -c /opt/stack/devstack/stack.sh
 
-echo "OFFLINE=True" >> /opt/stack/devstack/local.conf
+# set OFFLINE for the next boot
+sed -i 's|#OFFLINE=True|OFFLINE=True|g' /opt/stack/devstack/local.conf
+
+# Allow more restarts, this is necessary because we're skipping most of the installation on boot later,
+# so there are a lot of apache2 systemd service restarts triggered in a short amount of time
+mkdir -p /lib/systemd/system/apache2.service.d
+cat << EOF > /lib/systemd/system/apache2.service.d/restart.conf
+[Service]
+StartLimitBurst=20
+EOF
+systemctl daemon-reload
+
+# stop and disable all devstack services
+systemctl list-units | grep devstack@ | awk '{print $1}'  | xargs -I {} systemctl stop {}
+systemctl stop rabbitmq-server.service haproxy.service apache2.service memcached.service openvswitch-switch.service uwsgi.service
+systemctl list-units | grep devstack@ | awk '{print $1}'  | xargs -I {} systemctl disable {}
+systemctl disable rabbitmq-server.service haproxy.service apache2.service memcached.service openvswitch-switch.service uwsgi.service
 
 # Add environment variables for auth/endpoints
 echo 'source /opt/stack/devstack/openrc admin admin' >> /opt/stack/.bashrc

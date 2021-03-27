@@ -10,7 +10,7 @@ UBUNTU_VERSION="2004"
 SHORT_SHA="$(git rev-parse --short HEAD)"
 MAKE_VERSION="build-qemu-ubuntu-${UBUNTU_VERSION}"
 BUILD_VERSION="${UBUNTU_VERSION}-${SHORT_SHA}-${DATE}"
-BUILD_DIR=./outputFIXME/devstack
+BUILD_DIR=./output/devstack
 IMAGE_NAME=devstack
 
 echo "Install prerequisites"
@@ -42,6 +42,8 @@ ls -la ${BUILD_DIR}
 echo -e "[INFO] Version of image: ${BUILD_VERSION}\n"
 
 # we have to cleanup files so we can upload all files in the build dir
+
+# FIXME: adjust if it should be used to the manual build doc
 
 echo "Converting qcow2 to raw"
 qemu-img convert -f qcow2 -O raw ${BUILD_DIR}/${IMAGE_NAME} ${BUILD_DIR}/disk.raw
