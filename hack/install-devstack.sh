@@ -170,15 +170,6 @@ StartLimitBurst=20
 EOF
 systemctl daemon-reload
 
-# FIXME: test one image without that manual shutdown
-
-#echo "disable all devstack services"
-#
-#echo "disable devstack services"
-#sudo systemctl list-unit-files --type=service | grep enabled | grep devstack | awk '{print $1}' | xargs -I {} sudo systemctl disable {}
-#echo "disable misc services"
-#sudo systemctl disable rabbitmq-server.service haproxy.service apache2.service memcached.service openvswitch-switch.service uwsgi.service
-
 # Add environment variables for auth/endpoints
 echo 'source /opt/stack/devstack/openrc admin admin' >> /opt/stack/.bashrc
 
