@@ -1,9 +1,10 @@
 #!/bin/bash
 
 set -o errexit -o nounset -o pipefail
-
+set -x
 
 # GCP setup
+
 ## Cleanup grub command line
 sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT=\"\"/' /etc/default/grub
 sed -i 's/GRUB_CMDLINE_LINUX=.*$/GRUB_CMDLINE_LINUX=\"console=tty0 console=ttyS0,38400n8d\"/' /etc/default/grub
@@ -79,15 +80,18 @@ KEYSTONE_TOKEN_FORMAT=fernet
 
 SERVICE_TIMEOUT=240
 
-DATABASE_PASSWORD=secrete
-RABBIT_PASSWORD=secrete
-ADMIN_PASSWORD=secrete
-SERVICE_PASSWORD=secrete
+DATABASE_PASSWORD=secretdatabase
+RABBIT_PASSWORD=secretrabbit
+ADMIN_PASSWORD=secretadmin
+SERVICE_PASSWORD=secretservice
 SERVICE_TOKEN=111222333444
 
 # IP from packer (we need to create the server later with this IP)
 HOST_IP=10.0.2.15
 FLOATING_RANGE="172.24.4.0/24"
+OCTAVIA_MGMT_PORT_IP=192.168.0.96
+OCTAVIA_MGMT_SUBNET_START=192.168.0.2
+OCTAVIA_MGMT_SUBNET_END=192.168.0.200
 
 # Enable Logging
 LOGFILE=/opt/stack/logs/stack.sh.log
@@ -123,16 +127,18 @@ LIBVIRT_TYPE=kvm
 # Don't download default images, just our test images
 DOWNLOAD_DEFAULT_IMAGES=False
 # Upload amphora so it doesn't have to be built
-IMAGE_URLS="https://github.com/sbueringer/cluster-api-provider-openstack-images/releases/download/amphora-victoria-1/amphora-x64-haproxy.qcow2"
+IMAGE_URLS="https://storage.googleapis.com/artifacts.k8s-staging-capi-openstack.appspot.com/test/amphora/2021-03-27/amphora-x64-haproxy.qcow2"
 
 # See: https://docs.openstack.org/nova/victoria/configuration/sample-config.html
 # Helpful commands (on the devstack VM):
+# * source /opt/stack/devstack/openrc admin admin
 # * openstack resource provider list
 # * openstack resource provider inventory list 4aa55af2-d50a-4a53-b225-f6b22dd01044
 # * openstack resource provider usage show 4aa55af2-d50a-4a53-b225-f6b22dd01044
 # * openstack hypervisor stats show
 # * openstack hypervisor list
 # * openstack hypervisor show openstack
+# * nova-manage cell_v2  list_hosts
 # A CPU allocation ratio von 32 gives us 32 vCPUs in devstack
 # This should be enough to run multiple e2e tests at the same time
 [[post-config|\$NOVA_CONF]]
@@ -150,6 +156,8 @@ chown -R stack:stack /opt/stack/devstack/
 # Stack that stack!
 su - stack -c /opt/stack/devstack/stack.sh
 
+echo "Installation done at $(date)"
+
 # set OFFLINE for the next boot
 sed -i 's|#OFFLINE=True|OFFLINE=True|g' /opt/stack/devstack/local.conf
 
@@ -162,11 +170,16 @@ StartLimitBurst=20
 EOF
 systemctl daemon-reload
 
-# stop and disable all devstack services
-systemctl list-units | grep devstack@ | awk '{print $1}'  | xargs -I {} systemctl stop {}
-systemctl stop rabbitmq-server.service haproxy.service apache2.service memcached.service openvswitch-switch.service uwsgi.service
-systemctl list-units | grep devstack@ | awk '{print $1}'  | xargs -I {} systemctl disable {}
-systemctl disable rabbitmq-server.service haproxy.service apache2.service memcached.service openvswitch-switch.service uwsgi.service
+# FIXME: test one image without that manual shutdown
+
+#echo "disable all devstack services"
+#
+#echo "disable devstack services"
+#sudo systemctl list-unit-files --type=service | grep enabled | grep devstack | awk '{print $1}' | xargs -I {} sudo systemctl disable {}
+#echo "disable misc services"
+#sudo systemctl disable rabbitmq-server.service haproxy.service apache2.service memcached.service openvswitch-switch.service uwsgi.service
 
 # Add environment variables for auth/endpoints
 echo 'source /opt/stack/devstack/openrc admin admin' >> /opt/stack/.bashrc
+
+su - stack -c /opt/stack/devstack/unstack.sh

@@ -41,7 +41,7 @@
       {
         "type": "compress",
         "keep_input_artifact": true,
-        "output": "/tmp/devstack.raw.tar.gz"
+        "output": "./output/devstack.raw.tar.gz"
       }
     ]
   ],

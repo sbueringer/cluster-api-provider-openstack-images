@@ -43,7 +43,7 @@ echo -e "[INFO] Version of image: ${BUILD_VERSION}\n"
 
 # we have to cleanup files so we can upload all files in the build dir
 
-# FIXME: adjust if it should be used to the manual build doc
+# TODO: adjust to the manual build doc if it should be used
 
 echo "Converting qcow2 to raw"
 qemu-img convert -f qcow2 -O raw ${BUILD_DIR}/${IMAGE_NAME} ${BUILD_DIR}/disk.raw
